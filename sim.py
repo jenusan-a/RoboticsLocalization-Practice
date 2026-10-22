@@ -83,7 +83,7 @@ def main():
 
     with open("data/log.csv", "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["t", "left_counts", "right_counts"])
+        writer.writerow(["t", "true_x", "true_y", "true_yaw", "left_counts", "right_counts"])
 
         t = 0.0
         for segment in TRAJECTORY:
@@ -93,11 +93,12 @@ def main():
                 p.stepSimulation()
                 t += 1.0 / SIM_HZ
                 pose = read_true_pose(robot)
-                writer.writerow([round(t, 5), *read_encoder_counts(robot)])
+                writer.writerow([round(t, 5), *pose, *read_encoder_counts(robot)])
                 if args.gui:
                     time.sleep(1.0 / SIM_HZ)
 
-    print(f"Done: {t:.1f} s simulated")
+    x, y, yaw = read_true_pose(robot)
+    print(f"Done: {t:.1f} s simulated, final true pose x={x:.2f} m, y={y:.2f} m, yaw={math.degrees(yaw):.1f} deg")
     print("Log written to data/log.csv")
     p.disconnect()
 
