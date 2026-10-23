@@ -40,7 +40,7 @@ def odometry(ds_l, ds_r, start_pose):
 
 
 def wrap_angle(a):
-    """Keep angles within ±π, so e.g. 359° and -1° count as the same heading."""
+    """Keep angles within ±π, so e.g. 359° and -1° are facing the same way."""
     return (a + np.pi) % (2 * np.pi) - np.pi
 
 
@@ -63,7 +63,7 @@ def noisy_runs(ds_l, ds_r, start_pose):
 def main():
     log = load_log()
     true_x, true_y, true_yaw = log["true_x"], log["true_y"], log["true_yaw"]
-    start_pose = (true_x[0], true_y[0], true_yaw[0])  # known start pose 
+    start_pose = (0.0, 0.0, 0.0)
 
     ds_l, ds_r = wheel_distances(log["left_counts"], log["right_counts"])
 
