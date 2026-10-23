@@ -15,9 +15,9 @@ RIGHT_WHEEL = 1            # right_wheel_joint
 CASTER = 2                 # caster_wheel link
 ENCODER_COUNTS_PER_REV = 1000
 
-# Each segment drives until its goal is reached.
-STRAIGHT = {"distance": 1.0, "left_speed": 8.0, "right_speed": 8.0}  # m
-TURN_LEFT = {"angle": 90.0, "left_speed": 3.2, "right_speed": 8.0}  # deg
+# Open-loop segments: fixed wheel speeds (rad/s) for a fixed time (s)
+STRAIGHT = {"duration": 2.5, "left_speed": 8.0, "right_speed": 8.0}   # ~1.0 m
+TURN_LEFT = {"duration": 1.44, "left_speed": 3.2, "right_speed": 8.0}  # ~90 deg
 
 # Rounded square loop that ends near the start
 TRAJECTORY = [STRAIGHT, TURN_LEFT] * 4
@@ -54,22 +54,6 @@ def read_true_pose(robot):
     return pos[0], pos[1], yaw
 
 
-def segment_done(segment, start_pose, pose):
-    """True once the segment's distance or turn angle has been reached."""
-    start_x, start_y, start_yaw = start_pose
-    x, y, yaw = pose
-
-    if "distance" in segment:
-        dx = x - start_x
-        dy = y - start_y
-        distance_travelled = math.hypot(dx, dy)
-        return distance_travelled >= segment["distance"]
-
-    dyaw = yaw - start_yaw
-    angle_turned = math.atan2(math.sin(dyaw), math.cos(dyaw))
-    return abs(math.degrees(angle_turned)) >= segment["angle"]
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--gui", action="store_true", help="show the 3D window")
@@ -88,12 +72,10 @@ def main():
         t = 0.0
         for segment in TRAJECTORY:
             set_wheel_speeds(robot, segment["left_speed"], segment["right_speed"])
-            start_pose = pose = read_true_pose(robot)
-            while not segment_done(segment, start_pose, pose):
+            for _ in range(round(segment["duration"] * SIM_HZ)):
                 p.stepSimulation()
                 t += 1.0 / SIM_HZ
-                pose = read_true_pose(robot)
-                writer.writerow([round(t, 5), *pose, *read_encoder_counts(robot)])
+                writer.writerow([round(t, 5), *read_true_pose(robot), *read_encoder_counts(robot)])
                 if args.gui:
                     time.sleep(1.0 / SIM_HZ)
 
